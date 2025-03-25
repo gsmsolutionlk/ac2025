@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Accounting System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+    <style>
+        .tab-content {
+            padding: 20px;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0 0 5px 5px;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+        }
+        .account-card {
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .form-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .total-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .indent-row {
+            padding-left: 30px;
+        }
+        .date-filter {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .table th {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-3">
+        <h1 class="text-center mb-4">Complete Accounting System</h1>
+        
+        <!-- Connection Settings -->
+        <div class="card mb-4 account-card">
+            <div class="card-header bg-primary text-white">
+                Google Sheets Connection
+            </div>
+            <div class="card-body">
+                <div class="form-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sheetId" class="form-label">Google Sheet ID</label>
+                                <input type="text" class="form-control" id="sheetId" placeholder="Enter your Google Sheet ID">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="apiKey" class="form-label">API Key</label>
+                                <input type="password" class="form-control" id="apiKey" placeholder="Enter your API Key">
+                            </div>
+                        </div>
+                    </div>
+                    <button id="connectBtn" class="btn btn-success">Connect to Google Sheets</button>
+                    <div id="connectionStatus" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation Tabs -->
+        <ul class="nav nav-tabs" id="accountingTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="profit-loss-tab" data-bs-toggle="tab" data-bs-target="#profit-loss" type="button" role="tab">Profit & Loss</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="balance-sheet-tab" data-bs-toggle="tab" data-bs-target="#balance-sheet" type="button" role="tab">Balance Sheet</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab">Inventory</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="creditors-tab" data-bs-toggle="tab" data-bs-target="#creditors" type="button" role="tab">Creditors</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="debtors-tab" data-bs-toggle="tab" data-bs-target="#debtors" type="button" role="tab">Debtors</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cash-tab" data-bs-toggle="tab" data-bs-target="#cash" type="button" role="tab">Cash Account</button>
+            </li>
+        </ul>
+
+        <!-- Tab Contents -->
+        <div class="tab-content" id="accountingTabsContent">
+            <!-- Profit & Loss Tab -->
+            <div class="tab-pane fade show active" id="profit-loss" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Income</h3>
+                        <div class="date-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="incomeStartDate" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="incomeStartDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="incomeEndDate" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="incomeEndDate">
+                                </div>
+                            </div>
+                            <button id="filterIncomeBtn" class="btn btn-sm btn-primary mt-2">Filter</button>
+                            <button id="resetIncomeFilterBtn" class="btn btn-sm btn-secondary mt-2">Reset</button>
+                        </div>
+                        <table id="incomeTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Invoice ID</th>
+                                    <th>Name</th>
+                                    <th>Amount</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr class="table-primary">
+                                    <td colspan="3">Total Income</td>
+                                    <td id="totalIncome">0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addIncomeModal">Add Income</button>
+                        <button class="btn btn-success" id="exportIncomeBtn">Export to Excel</button>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Expenses</h3>
+                        <div class="date-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="expenseStartDate" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="expenseStartDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="expenseEndDate" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="expenseEndDate">
+                                </div>
+                            </div>
+                            <button id="filterExpenseBtn" class="btn btn-sm btn-primary mt-2">Filter</button>
+                            <button id="resetExpenseFilterBtn" class="btn btn-sm btn-secondary mt-2">Reset</button>
+                        </div>
+                        <table id="expensesTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Invoice ID</th>
+                                    <th>Name</th>
+                                    <th>Amount</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr class="table-primary">
+                                    <td colspan="3">Total Expenses</td>
+                                    <td id="totalExpenses">0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">Add Expense</button>
+                        <button class="btn btn-success" id="exportExpenseBtn">Export to Excel</button>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-md-6 offset-md-3 text-center">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h4>Profit & Loss Summary</h4>
+                            </div>
+                            <div class="card-body">
+                                <p>Total Income: <span id="plIncome" class="total-display">0.00</span></p>
+                                <p>Total Expenses: <span id="plExpenses" class="total-display">0.00</span></p>
+                                <hr>
+                                <p>Net Profit: <span id="netProfit" class="total-display">0.00</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance Sheet Tab -->
+            <div class="tab-pane fade" id="balance-sheet" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Assets</h3>
+                        <div class="date-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="assetStartDate" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="assetStartDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="assetEndDate" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="assetEndDate">
+                                </div>
+                            </div>
+                            <button id="filterAssetBtn" class="btn btn-sm btn-primary mt-2">Filter</button>
+                            <button id="resetAssetFilterBtn" class="btn btn-sm btn-secondary mt-2">Reset</button>
+                        </div>
+                        <table id="assetsTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Asset ID</th>
+                                    <th>Asset Name</th>
+                                    <th>Value</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr class="table-primary">
+                                    <td colspan="3">Total Assets</td>
+                                    <td id="totalAssets">0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAssetModal">Add Asset</button>
+                        <button class="btn btn-success" id="exportAssetBtn">Export to Excel</button>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Liabilities</h3>
+                        <div class="date-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="liabilityStartDate" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="liabilityStartDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="liabilityEndDate" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="liabilityEndDate">
+                                </div>
+                            </div>
+                            <button id="filterLiabilityBtn" class="btn btn-sm btn-primary mt-2">Filter</button>
+                            <button id="resetLiabilityFilterBtn" class="btn btn-sm btn-secondary mt-2">Reset</button>
+                        </div>
+                        <table id="liabilitiesTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Liability ID</th>
+                                    <th>Liability Name</th>
+                                    <th>Value</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr class="table-primary">
+                                    <td colspan="3">Total Liabilities</td>
+                                    <td id="totalLiabilities">0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLiabilityModal">Add Liability</button>
+                        <button class="btn btn-success" id="exportLiabilityBtn">Export to Excel</button>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-md-6 offset-md-3 text-center">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h4>Balance Sheet Summary</h4>
+                            </div>
+                            <div class="card-body">
+                                <p>Total Assets: <span id="bsAssets" class="total-display">0.00</span></p>
+                                <p>Total Liabilities: <span id="bsLiabilities" class="total-display">0.00</span></p>
+                                <hr>
+                                <p>Owner's Equity: <span id="ownersEquity" class="total-display">0.00</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Tab -->
+            <div class="tab-pane fade" id="inventory" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Inventory Movements</h3>
+                        <div class="date-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="inventoryStartDate" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="inventoryStartDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="inventoryEndDate" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="inventoryEndDate">
+                                </div>
+                            </div>
+                            <button id="filterInventoryBtn" class="btn btn-sm btn-primary mt-2">Filter</button>
+                            <button id="resetInventoryFilterBtn" class="btn btn-sm btn-secondary mt-2">Reset</button>
+                        </div>
+                        <table id="inventoryTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Product ID</th>
+                                    <th>Product Name</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Value</th>
+                                    <th>Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr class="table-primary">
+                                    <td colspan="5">Total Inventory Value</td>
+                                    <td id="totalInventory">0.00</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addInventoryModal">Add Inventory Item</button>
+                        <button class="btn btn-success" id="exportInventoryBtn">Export to Excel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Creditors Tab -->
+            <div class="tab-pane fade" id="creditors" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Creditors (Accounts Payable)</h3>
+                        <div class="date-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="creditorStartDate" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="creditorStartDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="creditorEndDate" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="creditorEndDate">
+                                </div>
+                            </div>
+                            <button id="filterCreditorBtn" class="btn btn-sm btn-primary mt-2">Filter</button>
+                            <button id="resetCreditorFilterBtn" class="btn btn-sm btn-secondary mt-2">Reset</button>
+                        </div>
+                        <table id="creditorsTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Invoice ID</th>
+                                    <th>Creditor Name</th>
+                                    <th>Amount Owed</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr class="table-primary">
+                                    <td colspan="3">Total Creditors</td>
+                                    <td id="totalCreditors">0.00</td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCreditorModal">Add Creditor</button>
+                        <button class="btn btn-success" id="exportCreditorBtn">Export to Excel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debtors Tab -->
+            <div class="tab-pane fade" id="debtors" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Debtors (Accounts Receivable)</h3>
+                        <div class="date-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="debtorStartDate" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="debtorStartDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="debtorEndDate" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="debtorEndDate">
+                                </div>
+                            </div>
+                            <button id="filterDebtorBtn" class="btn btn-sm btn-primary mt-2">Filter</button>
+                            <button id="resetDebtorFilterBtn" class="btn btn-sm btn-secondary mt-2">Reset</button>
+                        </div>
+                        <table id="debtorsTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Invoice ID</th>
+                                    <th>Debtor Name</th>
+                                    <th>Amount Due</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr class="table-primary">
+                                    <td colspan="3">Total Debtors</td>
+                                    <td id="totalDebtors">0.00</td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDebtorModal">Add Debtor</button>
+                        <button class="btn btn-success" id="exportDebtorBtn">Export to Excel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cash Account Tab -->
+            <div class="tab-pane fade" id="cash" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Cash Account</h3>
+                        <div class="date-filter">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="cashStartDate" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="cashStartDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cashEndDate" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="cashEndDate">
+                                </div>
+                            </div>
+                            <button id="filterCashBtn" class="btn btn-sm btn-primary mt-2">Filter</button>
+                            <button id="resetCashFilterBtn" class="btn btn-sm btn-secondary mt-2">Reset</button>
+                        </div>
+                        <table id="cashTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Transaction ID</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                    <th>Balance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr class="table-primary">
+                                    <td colspan="5">Current Cash Balance</td>
+                                    <td id="cashBalance">0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCashTransactionModal">Add Transaction</button>
+                        <button class="btn btn-success" id="exportCashBtn">Export to Excel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals for adding/editing records -->
+    <!-- Income Modal -->
+    <div class="modal fade" id="addIncomeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Income Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="incomeForm">
+                        <input type="hidden" id="incomeId">
+                        <div class="mb-3">
+                            <label for="incomeDate" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="incomeDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="incomeInvoiceId" class="form-label">Invoice ID</label>
+                            <input type="text" class="form-control" id="incomeInvoiceId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="incomeName" class="form-label">Income Name</label>
+                            <input type="text" class="form-control" id="incomeName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="incomeAmount" class="form-label">Amount</label>
+                            <input type="number" step="0.01" class="form-control" id="incomeAmount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="incomeDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="incomeDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveIncomeBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div class="modal fade" id="addExpenseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Expense Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="expenseForm">
+                        <input type="hidden" id="expenseId">
+                        <div class="mb-3">
+                            <label for="expenseDate" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="expenseDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expenseInvoiceId" class="form-label">Invoice ID</label>
+                            <input type="text" class="form-control" id="expenseInvoiceId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expenseName" class="form-label">Expense Name</label>
+                            <input type="text" class="form-control" id="expenseName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expenseAmount" class="form-label">Amount</label>
+                            <input type="number" step="0.01" class="form-control" id="expenseAmount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expenseCategory" class="form-label">Category</label>
+                            <select class="form-control" id="expenseCategory">
+                                <option value="Office Supplies">Office Supplies</option>
+                                <option value="Utilities">Utilities</option>
+                                <option value="Rent">Rent</option>
+                                <option value="Salaries">Salaries</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveExpenseBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset Modal -->
+    <div class="modal fade" id="addAssetModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Asset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="assetForm">
+                        <input type="hidden" id="assetId">
+                        <div class="mb-3">
+                            <label for="assetDate" class="form-label">Date Acquired</label>
+                            <input type="date" class="form-control" id="assetDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assetName" class="form-label">Asset Name</label>
+                            <input type="text" class="form-control" id="assetName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assetValue" class="form-label">Value</label>
+                            <input type="number" step="0.01" class="form-control" id="assetValue" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assetCategory" class="form-label">Category</label>
+                            <select class="form-control" id="assetCategory">
+                                <option value="Current">Current Asset</option>
+                                <option value="Fixed">Fixed Asset</option>
+                                <option value="Intangible">Intangible Asset</option>
+                                <option value="Investment">Investment</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveAssetBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Modal -->
+    <div class="modal fade" id="addInventoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Inventory Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="inventoryForm">
+                        <input type="hidden" id="inventoryId">
+                        <div class="mb-3">
+                            <label for="inventoryDate" class="form-label">Transaction Date</label>
+                            <input type="date" class="form-control" id="inventoryDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productId" class="form-label">Product ID</label>
+                            <input type="text" class="form-control" id="productId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productName" class="form-label">Product Name</label>
+                            <input type="text" class="form-control" id="productName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productQuantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="productQuantity" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productUnitPrice" class="form-label">Unit Price</label>
+                            <input type="number" step="0.01" class="form-control" id="productUnitPrice" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="inventoryType" class="form-label">Transaction Type</label>
+                            <select class="form-control" id="inventoryType">
+                                <option value="Purchase">Purchase</option>
+                                <option value="Sale">Sale</option>
+                                <option value="Adjustment">Adjustment</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveInventoryBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    
+    <script>
+        // Global variables
+        let connected = false;
+        let sheetId = '';
+        let apiKey = '';
+        let sheetsData = {
+            income: [],
+            expenses: [],
+            assets: [],
+            liabilities: [],
+            inventory: [],
+            creditors: [],
+            debtors: [],
+            cash: []
+        };
+
+        // Initialize DataTables
+        $(document).ready(function() {
+            // Initialize all tables with date sorting and export buttons
+            initDataTable('#incomeTable', [[0, 'desc']]);
+            initDataTable('#expensesTable', [[0, 'desc']]);
+            initDataTable('#assetsTable', [[0, 'desc']]);
+            initDataTable('#liabilitiesTable', [[0, 'desc']]);
+            initDataTable('#inventoryTable', [[0, 'desc']]);
+            initDataTable('#creditorsTable', [[0, 'desc']]);
+            initDataTable('#debtorsTable', [[0, 'desc']]);
+            initDataTable('#cashTable', [[0, 'desc']]);
+
+            // Connect to Google Sheets button
+            $('#connectBtn').click(connectToGoogleSheets);
+
+            // Save buttons for all modals
+            $('#saveIncomeBtn').click(saveIncome);
+            $('#saveExpenseBtn').click(saveExpense);
+            $('#saveAssetBtn').click(saveAsset);
+            $('#saveInventoryBtn').click(saveInventory);
+            
+            // Filter buttons
+            $('#filterIncomeBtn').click(() => filterTable('income'));
+            $('#filterExpenseBtn').click(() => filterTable('expenses'));
+            $('#filterAssetBtn').click(() => filterTable('assets'));
+            $('#filterLiabilityBtn').click(() => filterTable('liabilities'));
+            $('#filterInventoryBtn').click(() => filterTable('inventory'));
+            $('#filterCreditorBtn').click(() => filterTable('creditors'));
+            $('#filterDebtorBtn').click(() => filterTable('debtors'));
+            $('#filterCashBtn').click(() => filterTable('cash'));
+            
+            // Reset filter buttons
+            $('#resetIncomeFilterBtn').click(() => resetFilter('income'));
+            $('#resetExpenseFilterBtn').click(() => resetFilter('expenses'));
+            $('#resetAssetFilterBtn').click(() => resetFilter('assets'));
+            $('#resetLiabilityFilterBtn').click(() => resetFilter('liabilities'));
+            $('#resetInventoryFilterBtn').click(() => resetFilter('inventory'));
+            $('#resetCreditorFilterBtn').click(() => resetFilter('creditors'));
+            $('#resetDebtorFilterBtn').click(() => resetFilter('debtors'));
+            $('#resetCashFilterBtn').click(() => resetFilter('cash'));
+            
+            // Export buttons
+            $('#exportIncomeBtn').click(() => exportToExcel('incomeTable', 'Income'));
+            $('#exportExpenseBtn').click(() => exportToExcel('expensesTable', 'Expenses'));
+            $('#exportAssetBtn').click(() => exportToExcel('assetsTable', 'Assets'));
+            $('#exportLiabilityBtn').click(() => exportToExcel('liabilitiesTable', 'Liabilities'));
+            $('#exportInventoryBtn').click(() => exportToExcel('inventoryTable', 'Inventory'));
+            $('#exportCreditorBtn').click(() => exportToExcel('creditorsTable', 'Creditors'));
+            $('#exportDebtorBtn').click(() => exportToExcel('debtorsTable', 'Debtors'));
+            $('#exportCashBtn').click(() => exportToExcel('cashTable', 'Cash_Account'));
+
+            // Set default dates to current month
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            setDefaultDateRange(firstDay, today);
+            
+            // Load sample data for demo purposes
+            loadSampleData();
+        });
+
+        // Function to initialize DataTable with common settings
+        function initDataTable(tableId, order) {
+            return $(tableId).DataTable({
+                responsive: true,
+                order: order,
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                columnDefs: [
+                    { type: 'date', targets: 0 }
+                ]
+            });
+        }
+
+        // Function to set default date range in filters
+        function setDefaultDateRange(startDate, endDate) {
+            const formatDate = (date) => date.toISOString().split('T')[0];
+            
+            $('#incomeStartDate, #expenseStartDate, #assetStartDate, #liabilityStartDate, #inventoryStartDate, #creditorStartDate, #debtorStartDate, #cashStartDate').val(formatDate(startDate));
+            $('#incomeEndDate, #expenseEndDate, #assetEndDate, #liabilityEndDate, #inventoryEndDate, #creditorEndDate, #debtorEndDate, #cashEndDate').val(formatDate(endDate));
+        }
+
+        // Function to connect to Google Sheets
+        function connectToGoogleSheets() {
+            sheetId = $('#sheetId').val();
+            apiKey = $('#apiKey').val();
+            
+            if (!sheetId || !apiKey) {
+                $('#connectionStatus').html('<div class="alert alert-danger">Please enter both Sheet ID and API Key</div>');
+                return;
+            }
+            
+            // In a real implementation, you would make an API call to Google Sheets here
+            setTimeout(() => {
+                connected = true;
+                $('#connectionStatus').html('<div class="alert alert-success">Successfully connected to Google Sheets</div>');
+                loadAllDataFromSheets();
+            }, 1000);
+        }
+
+        // Function to load all data from Google Sheets
+        function loadAllDataFromSheets() {
+            if (!connected) return;
+            
+            // In a real implementation, you would make API calls to fetch data from each sheet
+            // For this demo, we'll use the sample data we already loaded
+            updateAllDisplays();
+        }
+
+        // Function to load sample data (for demo purposes)
+        function loadSampleData() {
+            const today = new Date();
+            const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            
+            sheetsData.income = [
+                {id: 'INC001', date: formatDateForStorage(lastMonth), invoiceId: 'INV2023-001', name: 'Product Sales', amount: 5000},
+                {id: 'INC002', date: formatDateForStorage(today), invoiceId: 'INV2023-002', name: 'Service Revenue', amount: 3000}
+            ];
+            
+            sheetsData.expenses = [
+                {id: 'EXP001', date: formatDateForStorage(lastMonth), invoiceId: 'BILL2023-001', name: 'Office Rent', amount: 1200, category: 'Rent'},
+                {id: 'EXP002', date: formatDateForStorage(today), invoiceId: 'BILL2023-002', name: 'Utilities', amount: 350, category: 'Utilities'}
+            ];
+            
+            sheetsData.assets = [
+                {id: 'AST001', date: formatDateForStorage(new Date('2023-01-01')), name: 'Office Equipment', value: 5000, category: 'Fixed'},
+                {id: 'AST002', date: formatDateForStorage(new Date('2022-12-15')), name: 'Company Vehicle', value: 25000, category: 'Fixed'}
+            ];
+            
+            sheetsData.inventory = [
+                {id: 'INV001', date: formatDateForStorage(lastMonth), productId: 'PROD1001', name: 'Laptop', quantity: 10, unitPrice: 899.99, type: 'Purchase'},
+                {id: 'INV002', date: formatDateForStorage(today), productId: 'PROD1002', name: 'Monitor', quantity: 15, unitPrice: 199.99, type: 'Purchase'}
+            ];
+            
+            sheetsData.creditors = [
+                {id: 'CRD001', date: formatDateForStorage(lastMonth), invoiceId: 'SUP-2023-001', name: 'Office Supplies Inc', amount: 1500, dueDate: formatDateForStorage(new Date(today.getTime() + 30*24*60*60*1000)), status: 'Pending'},
+                {id: 'CRD002', date: formatDateForStorage(today), invoiceId: 'UTIL-2023-001', name: 'Utility Company', amount: 450, dueDate: formatDateForStorage(new Date(today.getTime() + 15*24*60*60*1000)), status: 'Pending'}
+            ];
+            
+            sheetsData.debtors = [
+                {id: 'DBT001', date: formatDateForStorage(lastMonth), invoiceId: 'CUST-2023-001', name: 'ABC Client', amount: 2000, dueDate: formatDateForStorage(new Date(today.getTime() + 30*24*60*60*1000)), status: 'Pending'},
+                {id: 'DBT002', date: formatDateForStorage(today), invoiceId: 'CUST-2023-002', name: 'XYZ Corporation', amount: 3500, dueDate: formatDateForStorage(new Date(today.getTime() + 45*24*60*60*1000)), status: 'Pending'}
+            ];
+            
+            sheetsData.cash = [
+                {id: 'CSH001', date: formatDateForStorage(lastMonth), transactionId: 'DEP-001', description: 'Initial Deposit', amount: 10000, type: 'Deposit', balance: 10000},
+                {id: 'CSH002', date: formatDateForStorage(today), transactionId: 'WTH-001', description: 'Office Supplies', amount: 250, type: 'Withdrawal', balance: 9750}
+            ];
+            
+            updateAllDisplays();
+        }
+
+        // Function to update all displays with current data
+        function updateAllDisplays() {
+            updateIncomeTable();
+            updateExpensesTable();
+            updateAssetsTable();
+            updateLiabilitiesTable();
+            updateInventoryTable();
+            updateCreditorsTable();
+            updateDebtorsTable();
+            updateCashTable();
+            updateProfitLossSummary();
+            updateBalanceSheetSummary();
+        }
+
+        // Function to update the income table
+        function updateIncomeTable() {
+            const table = $('#incomeTable').DataTable();
+            table.clear();
+            
+            let totalIncome = 0;
+            sheetsData.income.forEach(item => {
+                table.row.add([
+                    formatDateForDisplay(item.date),
+                    item.invoiceId,
+                    item.name,
+                    formatCurrency(item.amount),
+                    `<button class="btn btn-sm btn-warning edit-income" data-id="${item.id}">Edit</button>
+                     <button class="btn btn-sm btn-danger delete-income" data-id="${item.id}">Delete</button>`
+                ]);
+                totalIncome += item.amount;
+            });
+            
+            table.draw();
+            $('#totalIncome').text(formatCurrency(totalIncome));
+            $('#plIncome').text(formatCurrency(totalIncome));
+        }
+
+        // Function to update the expenses table
+        function updateExpensesTable() {
+            const table = $('#expensesTable').DataTable();
+            table.clear();
+            
+            let totalExpenses = 0;
+            sheetsData.expenses.forEach(item => {
+                table.row.add([
+                    formatDateForDisplay(item.date),
+                    item.invoiceId,
+                    item.name,
+                    formatCurrency(item.amount),
+                    `<button class="btn btn-sm btn-warning edit-expense" data-id="${item.id}">Edit</button>
+                     <button class="btn btn-sm btn-danger delete-expense" data-id="${item.id}">Delete</button>`
+                ]);
+                totalExpenses += item.amount;
+            });
+            
+            table.draw();
+            $('#totalExpenses').text(formatCurrency(totalExpenses));
+            $('#plExpenses').text(formatCurrency(totalExpenses));
+        }
+
+        // Function to update the assets table
+        function updateAssetsTable() {
+            const table = $('#assetsTable').DataTable();
+            table.clear();
+            
+            let totalAssets = 0;
+            sheetsData.assets.forEach(item => {
+                table.row.add([
+                    formatDateForDisplay(item.date),
+                    item.id,
+                    item.name,
+                    formatCurrency(item.value),
+                    `<button class="btn btn-sm btn-warning edit-asset" data-id="${item.id}">Edit</button>
+                     <button class="btn btn-sm btn-danger delete-asset" data-id="${item.id}">Delete</button>`
+                ]);
+                totalAssets += item.value;
+            });
+            
+            table.draw();
+            $('#totalAssets').text(formatCurrency(totalAssets));
+            $('#bsAssets').text(formatCurrency(totalAssets));
+        }
+
+        // Function to update the liabilities table
+        function updateLiabilitiesTable() {
+            const table = $('#liabilitiesTable').DataTable();
+            table.clear();
+            
+            let totalLiabilities = 0;
+            sheetsData.liabilities.forEach(item => {
+                table.row.add([
+                    formatDateForDisplay(item.date),
+                    item.id,
+                    item.name,
+                    formatCurrency(item.value),
+                    `<button class="btn btn-sm btn-warning edit-liability" data-id="${item.id}">Edit</button>
+                     <button class="btn btn-sm btn-danger delete-liability" data-id="${item.id}">Delete</button>`
+                ]);
+                totalLiabilities += item.value;
+            });
+            
+            table.draw();
+            $('#totalLiabilities').text(formatCurrency(totalLiabilities));
+            $('#bsLiabilities').text(formatCurrency(totalLiabilities));
+        }
+
+        // Function to update the inventory table
+        function updateInventoryTable() {
+            const table = $('#inventoryTable').DataTable();
+            table.clear();
+            
+            let totalInventory = 0;
+            sheetsData.inventory.forEach(item => {
+                const totalValue = item.quantity * item.unitPrice;
+                table.row.add([
+                    formatDateForDisplay(item.date),
+                    item.productId,
+                    item.name,
+                    item.quantity,
+                    formatCurrency(item.unitPrice),
+                    formatCurrency(totalValue),
+                    item.type,
+                    `<button class="btn btn-sm btn-warning edit-inventory" data-id="${item.id}">Edit</button>
+                     <button class="btn btn-sm btn-danger delete-inventory" data-id="${item.id}">Delete</button>`
+                ]);
+                totalInventory += totalValue;
+            });
+            
+            table.draw();
+            $('#totalInventory').text(formatCurrency(totalInventory));
+        }
+
+        // Function to update the creditors table
+        function updateCreditorsTable() {
+            const table = $('#creditorsTable').DataTable();
+            table.clear();
+            
+            let totalCreditors = 0;
+            sheetsData.creditors.forEach(item => {
+                table.row.add([
+                    formatDateForDisplay(item.date),
+                    item.invoiceId,
+                    item.name,
+                    formatCurrency(item.amount),
+                    formatDateForDisplay(item.dueDate),
+                    item.status,
+                    `<button class="btn btn-sm btn-warning edit-creditor" data-id="${item.id}">Edit</button>
+                     <button class="btn btn-sm btn-danger delete-creditor" data-id="${item.id}">Delete</button>`
+                ]);
+                totalCreditors += item.amount;
+            });
+            
+            table.draw();
+            $('#totalCreditors').text(formatCurrency(totalCreditors));
+        }
+
+        // Function to update the debtors table
+        function updateDebtorsTable() {
+            const table = $('#debtorsTable').DataTable();
+            table.clear();
+            
+            let totalDebtors = 0;
+            sheetsData.debtors.forEach(item => {
+                table.row.add([
+                    formatDateForDisplay(item.date),
+                    item.invoiceId,
+                    item.name,
+                    formatCurrency(item.amount),
+                    formatDateForDisplay(item.dueDate),
+                    item.status,
+                    `<button class="btn btn-sm btn-warning edit-debtor" data-id="${item.id}">Edit</button>
+                     <button class="btn btn-sm btn-danger delete-debtor" data-id="${item.id}">Delete</button>`
+                ]);
+                totalDebtors += item.amount;
+            });
+            
+            table.draw();
+            $('#totalDebtors').text(formatCurrency(totalDebtors));
+        }
+
+        // Function to update the cash table
+        function updateCashTable() {
+            const table = $('#cashTable').DataTable();
+            table.clear();
+            
+            let currentBalance = 0;
+            sheetsData.cash.forEach(item => {
+                if (item.type === 'Deposit') {
+                    currentBalance += item.amount;
+                } else {
+                    currentBalance -= item.amount;
+                }
+                item.balance = currentBalance;
+                
+                table.row.add([
+                    formatDateForDisplay(item.date),
+                    item.transactionId,
+                    item.description,
+                    formatCurrency(item.amount),
+                    item.type,
+                    formatCurrency(item.balance),
+                    `<button class="btn btn-sm btn-warning edit-cash" data-id="${item.id}">Edit</button>
+                     <button class="btn btn-sm btn-danger delete-cash" data-id="${item.id}">Delete</button>`
+                ]);
+            });
+            
+            table.draw();
+            $('#cashBalance').text(formatCurrency(currentBalance));
+        }
+
+        // Function to update the Profit & Loss summary
+        function updateProfitLossSummary() {
+            const totalIncome = sheetsData.income.reduce((sum, item) => sum + item.amount, 0);
+            const totalExpenses = sheetsData.expenses.reduce((sum, item) => sum + item.amount, 0);
+            const netProfit = totalIncome - totalExpenses;
+            
+            $('#plIncome').text(formatCurrency(totalIncome));
+            $('#plExpenses').text(formatCurrency(totalExpenses));
+            $('#netProfit').text(formatCurrency(netProfit));
+        }
+
+        // Function to update the Balance Sheet summary
+        function updateBalanceSheetSummary() {
+            const totalAssets = sheetsData.assets.reduce((sum, item) => sum + item.value, 0);
+            const totalLiabilities = sheetsData.liabilities.reduce((sum, item) => sum + item.value, 0);
+            const ownersEquity = totalAssets - totalLiabilities;
+            
+            $('#bsAssets').text(formatCurrency(totalAssets));
+            $('#bsLiabilities').text(formatCurrency(totalLiabilities));
+            $('#ownersEquity').text(formatCurrency(ownersEquity));
+        }
+
+        // Function to save income record
+        function saveIncome() {
+            const incomeData = {
+                id: $('#incomeId').val() || 'INC' + Math.floor(1000 + Math.random() * 9000),
+                date: $('#incomeDate').val(),
+                invoiceId: $('#incomeInvoiceId').val(),
+                name: $('#incomeName').val(),
+                amount: parseFloat($('#incomeAmount').val()),
+                description: $('#incomeDescription').val()
+            };
+            
+            if ($('#incomeId').val()) {
+                // Update existing record
+                const index = sheetsData.income.findIndex(item => item.id === $('#incomeId').val());
+                if (index !== -1) {
+                    sheetsData.income[index] = incomeData;
+                }
+            } else {
+                // Add new record
+                sheetsData.income.push(incomeData);
+            }
+            
+            $('#addIncomeModal').modal('hide');
+            updateIncomeTable();
+            updateProfitLossSummary();
+            updateCashTable();
+        }
+
+        // Function to save expense record
+        function saveExpense() {
+            const expenseData = {
+                id: $('#expenseId').val() || 'EXP' + Math.floor(1000 + Math.random() * 9000),
+                date: $('#expenseDate').val(),
+                invoiceId: $('#expenseInvoiceId').val(),
+                name: $('#expenseName').val(),
+                amount: parseFloat($('#expenseAmount').val()),
+                category: $('#expenseCategory').val()
+            };
+            
+            if ($('#expenseId').val()) {
+                // Update existing record
+                const index = sheetsData.expenses.findIndex(item => item.id === $('#expenseId').val());
+                if (index !== -1) {
+                    sheetsData.expenses[index] = expenseData;
+                }
+            } else {
+                // Add new record
+                sheetsData.expenses.push(expenseData);
+            }
+            
+            $('#addExpenseModal').modal('hide');
+            updateExpensesTable();
+            updateProfitLossSummary();
+            updateCashTable();
+        }
+
+        // Function to save asset record
+        function saveAsset() {
+            const assetData = {
+                id: $('#assetId').val() || 'AST' + Math.floor(1000 + Math.random() * 9000),
+                date: $('#assetDate').val(),
+                name: $('#assetName').val(),
+                value: parseFloat($('#assetValue').val()),
+                category: $('#assetCategory').val()
+            };
+            
+            if ($('#assetId').val()) {
+                // Update existing record
+                const index = sheetsData.assets.findIndex(item => item.id === $('#assetId').val());
+                if (index !== -1) {
+                    sheetsData.assets[index] = assetData;
+                }
+            } else {
+                // Add new record
+                sheetsData.assets.push(assetData);
+            }
+            
+            $('#addAssetModal').modal('hide');
+            updateAssetsTable();
+            updateBalanceSheetSummary();
+        }
+
+        // Function to save inventory record
+        function saveInventory() {
+            const inventoryData = {
+                id: $('#inventoryId').val() || 'INV' + Math.floor(1000 + Math.random() * 9000),
+                date: $('#inventoryDate').val(),
+                productId: $('#productId').val(),
+                name: $('#productName').val(),
+                quantity: parseInt($('#productQuantity').val()),
+                unitPrice: parseFloat($('#productUnitPrice').val()),
+                type: $('#inventoryType').val()
+            };
+            
+            if ($('#inventoryId').val()) {
+                // Update existing record
+                const index = sheetsData.inventory.findIndex(item => item.id === $('#inventoryId').val());
+                if (index !== -1) {
+                    sheetsData.inventory[index] = inventoryData;
+                }
+            } else {
+                // Add new record
+                sheetsData.inventory.push(inventoryData);
+            }
+            
+            $('#addInventoryModal').modal('hide');
+            updateInventoryTable();
+        }
+
+        // Function to filter tables by date range
+        function filterTable(tableType) {
+            const startDate = $(`#${tableType}StartDate`).val();
+            const endDate = $(`#${tableType}EndDate`).val();
+            
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates');
+                return;
+            }
+            
+            const filteredData = sheetsData[tableType].filter(item => {
+                const itemDate = new Date(item.date);
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                return itemDate >= start && itemDate <= end;
+            });
+            
+            // Update the specific table with filtered data
+            switch(tableType) {
+                case 'income':
+                    updateTableWithFilter('#incomeTable', filteredData, ['date', 'invoiceId', 'name', 'amount']);
+                    break;
+                case 'expenses':
+                    updateTableWithFilter('#expensesTable', filteredData, ['date', 'invoiceId', 'name', 'amount']);
+                    break;
+                case 'assets':
+                    updateTableWithFilter('#assetsTable', filteredData, ['date', 'id', 'name', 'value']);
+                    break;
+                case 'inventory':
+                    updateTableWithFilter('#inventoryTable', filteredData, ['date', 'productId', 'name', 'quantity', 'unitPrice', 'totalValue', 'type']);
+                    break;
+                // Add cases for other table types as needed
+            }
+        }
+
+        // Helper function to update a table with filtered data
+        function updateTableWithFilter(tableId, data, columns) {
+            const table = $(tableId).DataTable();
+            table.clear();
+            
+            data.forEach(item => {
+                const row = columns.map(col => {
+                    if (col === 'date') return formatDateForDisplay(item.date);
+                    if (col === 'totalValue') return formatCurrency(item.quantity * item.unitPrice);
+                    if (col === 'amount' || col === 'value') return formatCurrency(item[col]);
+                    return item[col];
+                });
+                
+                // Add action buttons
+                row.push(`<button class="btn btn-sm btn-warning edit-${tableId.replace('#', '')}" data-id="${item.id}">Edit</button>
+                          <button class="btn btn-sm btn-danger delete-${tableId.replace('#', '')}" data-id="${item.id}">Delete</button>`);
+                
+                table.row.add(row);
+            });
+            
+            table.draw();
+        }
+
+        // Function to reset filters
+        function resetFilter(tableType) {
+            $(`#${tableType}StartDate`).val('');
+            $(`#${tableType}EndDate`).val('');
+            
+            // Reload the original data
+            switch(tableType) {
+                case 'income':
+                    updateIncomeTable();
+                    break;
+                case 'expenses':
+                    updateExpensesTable();
+                    break;
+                case 'assets':
+                    updateAssetsTable();
+                    break;
+                case 'inventory':
+                    updateInventoryTable();
+                    break;
+                // Add cases for other table types as needed
+            }
+        }
+
+        // Function to export table data to Excel
+        function exportToExcel(tableId, fileName) {
+            const table = $(tableId).DataTable();
+            table.button('.buttons-excel').trigger();
+        }
+
+        // Helper function to format currency
+        function formatCurrency(amount) {
+            return '$' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+
+        // Helper function to format date for display
+        function formatDateForDisplay(dateString) {
+            if (!dateString) return '';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+
+        // Helper function to format date for storage (YYYY-MM-DD)
+        function formatDateForStorage(date) {
+            if (!date) return '';
+            if (typeof date === 'string') return date;
+            
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+    </script>
+</body>
+</html>
